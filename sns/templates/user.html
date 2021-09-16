@@ -39,7 +39,7 @@
 
         function update_profile() {
             let name = $('#input-name').val()
-            let file = $('#input-pic')[0].files[0]
+            let file = $('#file-input')[0].files[0]
             let about = $("#textarea-about").val()
             let form_data = new FormData()
             form_data.append("file_give", file)
@@ -125,12 +125,11 @@
                                     </p>
                                 </div>
                                 <div class="field">
-                                    <label class="label" for="input-pic">프로필 사진</label>
-
+                                    <label class="label" for="file-input">프로필 사진</label>
                                     <div class="control is-expanded">
-                                        <div class="file has-name">
+                                        <div id="file-js" class="file has-name">
                                             <label class="file-label" style="width:100%">
-                                                <input id="input-pic" class="file-input" type="file" name="resume">
+                                                <input id="file-input" class="file-input" type="file" name="resume">
                                                 <span class="file-cta">
                                                     <span class="file-icon">
                                                         <i class="fa fa-upload"></i>
@@ -237,5 +236,14 @@
     </div>
 </section>
 
+<script>
+    const fileInput = document.querySelector('#file-js input[type=file]');
+    fileInput.onchange = () => {
+        if (fileInput.files.length > 0) {
+            const fileName = document.querySelector('#file-js .file-name');
+            fileName.textContent = fileInput.files[0].name;
+        }
+    }
+</script>
 </body>
 </html>
