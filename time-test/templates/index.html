@@ -32,59 +32,132 @@
             width: 900px;
             margin: auto;
         }
+
+        .info_button {
+            background-color: aqua;
+        }
     </style>
 
     <script>
+        let CODES = [];
+        let RESULT = {};
+
         $(document).ready(function () {
-            get_codes()
+            get_base_codes();
         })
 
-        function openClose() {
-            /*
-            if ($("#radio-box").css("display") == "block") {
-                $("#radio-box").hide();
-                $("#btn-post-box").text("추천시작");
-            } else {
-                $("#radio-box").show();
-                $("#btn-post-box").text("다음");
-            }
-             */
+        function reset_button() {
+            window.location.reload();
         }
 
-        function get_codes() {
+        let radio_val = "";
+
+        function save_radio_val(group, val) {
+            RESULT[group] = val;
+        }
+
+        let tmp_cnt = 0;
+
+        function click_button() {
+
+            if (tmp_cnt == 0) {
+                $("#btn-post-box").text("다음");
+                $("#btn-post-box").css("background-color", "green");
+                $("#radio-box").show();
+            }
+
+            if (tmp_cnt == CODES.length) {
+                $("#btn-post-box").text("다시선택");
+                $("#btn-post-box").css("background-color", "gray");
+                $("#btn-post-box").attr("onclick", "reset_button()")
+
+                get_stock();
+            } else if (tmp_cnt < CODES.length) {
+                $("#radio-box").empty();
+                let group = CODES[tmp_cnt];
+
+                $.ajax({
+                    type: "GET",
+                    url: `/codes?group=${group}`,
+                    data: {},
+                    success: function (response) {
+                        let groups = response["groups"]
+                        for (let i = 0; i < groups.length; i++) {
+                            let name = groups[i].name
+                            let code = groups[i].code
+
+                            let resHTML = `<div class="form-check">
+                                                <input onclick="save_radio_val('${group}','${code}')" class="form-check-input" type="radio" name="${group}" id="${code}">
+                                                <label class="form-check-label" for="${code}">
+                                                    ${name}
+                                                </label>
+                                            </div>`
+                            $("#radio-box").append(resHTML);
+                        }
+                        tmp_cnt++;
+                    }
+                })
+            }
+        }
+
+        function get_base_codes() {
             $.ajax({
                 type: "GET",
                 url: '/base/codes',
                 data: {},
                 success: function (response) {
-                    let codes = response['codes']
-                    console.log(codes);
+                    CODES = response['codes'];
+                }
+            })
+        }
 
-                    for (let i = 0; i < codes.length; i++) {
+        function info_button(stock_code) {
 
-                        {#let html = `<div class="form-check">#}
-                        {#                <input class="form-check-input" type="radio" name="${_code}" id="flexRadioDefault2">#}
-                        {#                <label class="form-check-label" for="flexRadioDefault2">#}
-                        {#                    ${_name}#}
-                        {#                </label>#}
-                        {#            </div>`#}
-                        {#$("#radio-box").append(html);#}
-                    }
-
+            $.ajax({
+                type: "GET",
+                url: `/info?stock_code=${stock_code}`,
+                data: {},
+                success: function (response) {
+                    alert("시가 : "+response['price']+"\n"+
+                        "시총 : "+response['market_cap']+"\n"+
+                        "PER : "+response['per'])
                 }
             })
         }
 
         function get_stock() {
-            console.log("get stock start")
+            $("#radio-box").hide();
 
             $.ajax({
                 type: "POST",
                 url: '/stock',
-                data: {"market": "market", "sector": "sector", "tag": "tag"},
+                contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(RESULT),
                 success: function (response) {
-                    console.log(response)
+                    let stocks = response['stocks']
+                    console.log(stocks)
 
+                    if(stocks.length==0) {
+                        let resHTML = `<div>
+                                            <span>해당하는 기업이 없습니다.</span>
+                                        </div>`
+
+                        $("#stock_box").append(resHTML);
+                    }
+
+
+                    for (let i = 0; i < stocks.length; i++) {
+                        let stock_name = stocks[i].name
+                        let stock_code = stocks[i].code
+
+                        let resHTML = `<div>
+                                            <span>${stock_name}</span>
+                                            <button onclick="info_button('${stock_code}')" class="info_button" type="button">정보
+                                            </button>
+                                        </div>`
+
+                        $("#stock_box").append(resHTML);
+                    }
                 }
             })
         }
@@ -99,13 +172,14 @@
         <p class="lead">원하시는 종목을 추천합니다. 상한가 가즈아~!</p>
         <hr class="my-4">
 
-        <p class="lead">
+        <div id="radio-box" style="display: none">
+        </div>
 
-        <div id="radio-box" style="">
+        <div id="stock_box" style="">
 
         </div>
 
-        <button onclick="get_stock()" id="btn-post-box" type="button" class="btn btn-primary">추천시작
+        <button onclick="click_button()" id="btn-post-box" type="button" class="btn btn-primary">추천시작
         </button>
         </p>
     </div>
