@@ -1,0 +1,93 @@
+<!Doctype html>
+<html lang="ko">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+          crossorigin="anonymous">
+
+    <!-- JS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+            integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+            crossorigin="anonymous"></script>
+
+    <!-- 구글폰트 -->
+    <link href="https://fonts.googleapis.com/css?family=Stylish&display=swap" rel="stylesheet">
+
+
+    <title>스파르타코딩클럽 | 나홀로 메모장</title>
+
+    <!-- style -->
+    <style type="text/css">
+        * {
+            font-family: "Stylish", sans-serif;
+        }
+
+        .wrap {
+            width: 900px;
+            margin: auto;
+        }
+    </style>
+
+    <script>
+        function openClose() {
+            /*
+            if ($("#radio-box").css("display") == "block") {
+                $("#radio-box").hide();
+                $("#btn-post-box").text("추천시작");
+            } else {
+                $("#radio-box").show();
+                $("#btn-post-box").text("다음");
+            }
+             */
+        }
+
+        function get_stock() {
+            console.log("get stock start")
+
+            $.ajax({
+                type: "POST",
+                url: '/stock',
+                data: JSON.stringify({"market": "market-1", "sector": "sector-1", "tag": "tag-1"}),
+                success: function (response) {
+                    console.log(response)
+
+                }
+            })
+        }
+    </script>
+
+</head>
+
+<body>
+<div class="wrap">
+    <div class="jumbotron">
+        <h1 class="display-4">주식 종목 추천!!!</h1>
+        <p class="lead">원하시는 종목을 추천합니다. 상한가 가즈아~!</p>
+        <hr class="my-4">
+
+        <p class="lead">
+
+        <div id="radio-box" style="">
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2">
+                <label class="form-check-label" for="flexRadioDefault2">
+                    ex
+                </label>
+            </div>
+        </div>
+
+        <button onclick="get_stock()" id="btn-post-box" type="button" class="btn btn-primary">추천시작
+        </button>
+        </p>
+    </div>
+</div>
+</body>
+
+</html>
