@@ -1,5 +1,4 @@
 from flask import Flask, render_template, jsonify, request
-
 app = Flask(__name__)
 
 from pymongo import MongoClient
@@ -13,6 +12,13 @@ def home():
     return render_template('index.html')
 
 
+@app.route('/base/codes', methods=['GET'])
+def get_codes():
+    codes = list(db.codes.find({}, {'_id': False}).distinct("group"))
+    print(codes)
+    return jsonify({'codes': codes})
+
+
 @app.route('/stock', methods=['POST'])
 def save_info():
     market = request.form['market']
@@ -22,7 +28,7 @@ def save_info():
     print(sector)
     print(tag)
 
-    stocks = list(db.codes.find({"group": market}, {'_id': False}))
+    stocks = list(db.codes.find({}, {'_id': False}))
     return jsonify({'stocks': stocks})
 
 

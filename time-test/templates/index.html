@@ -20,7 +20,6 @@
     <!-- 구글폰트 -->
     <link href="https://fonts.googleapis.com/css?family=Stylish&display=swap" rel="stylesheet">
 
-
     <title>스파르타코딩클럽 | 나홀로 메모장</title>
 
     <!-- style -->
@@ -36,6 +35,10 @@
     </style>
 
     <script>
+        $(document).ready(function () {
+            get_codes()
+        })
+
         function openClose() {
             /*
             if ($("#radio-box").css("display") == "block") {
@@ -48,13 +51,37 @@
              */
         }
 
+        function get_codes() {
+            $.ajax({
+                type: "GET",
+                url: '/base/codes',
+                data: {},
+                success: function (response) {
+                    let codes = response['codes']
+                    console.log(codes);
+
+                    for (let i = 0; i < codes.length; i++) {
+
+                        {#let html = `<div class="form-check">#}
+                        {#                <input class="form-check-input" type="radio" name="${_code}" id="flexRadioDefault2">#}
+                        {#                <label class="form-check-label" for="flexRadioDefault2">#}
+                        {#                    ${_name}#}
+                        {#                </label>#}
+                        {#            </div>`#}
+                        {#$("#radio-box").append(html);#}
+                    }
+
+                }
+            })
+        }
+
         function get_stock() {
             console.log("get stock start")
 
             $.ajax({
                 type: "POST",
                 url: '/stock',
-                data: {"market": "market", "sector": "sector-1", "tag": "tag-1"},
+                data: {"market": "market", "sector": "sector", "tag": "tag"},
                 success: function (response) {
                     console.log(response)
 
@@ -75,12 +102,7 @@
         <p class="lead">
 
         <div id="radio-box" style="">
-            <div class="form-check">
-                <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2">
-                <label class="form-check-label" for="flexRadioDefault2">
-                    ex
-                </label>
-            </div>
+
         </div>
 
         <button onclick="get_stock()" id="btn-post-box" type="button" class="btn btn-primary">추천시작
