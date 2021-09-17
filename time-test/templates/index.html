@@ -54,7 +54,7 @@
             $.ajax({
                 type: "POST",
                 url: '/stock',
-                data: JSON.stringify({"market": "market-1", "sector": "sector-1", "tag": "tag-1"}),
+                data: {"market": "market", "sector": "sector-1", "tag": "tag-1"},
                 success: function (response) {
                     console.log(response)
 

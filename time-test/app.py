@@ -15,9 +15,14 @@ def home():
 
 @app.route('/stock', methods=['POST'])
 def save_info():
-    info = request.args.get()
-    print(info)
-    stocks = list(db.codes.find({}, {'_id': False}))
+    market = request.form['market']
+    sector = request.form['sector']
+    tag = request.form['tag']
+    print(market)
+    print(sector)
+    print(tag)
+
+    stocks = list(db.codes.find({"group": market}, {'_id': False}))
     return jsonify({'stocks': stocks})
 
 
