@@ -36,6 +36,10 @@
         .info_button {
             background-color: aqua;
         }
+
+        .like_button {
+            background-color: yellow;
+        }
     </style>
 
     <script>
@@ -43,10 +47,10 @@
         let RESULT = {};
 
         $(document).ready(function () {
-            get_base_codes();
+            getBaseCodes();
         })
 
-        function get_base_codes() {
+        function getBaseCodes() {
             $.ajax({
                 type: "GET",
                 url: '/base/codes',
@@ -57,20 +61,17 @@
             })
         }
 
-        function reset_button() {
+        function reset() {
             window.location.reload();
         }
 
-        let radio_val = "";
-
-        function save_radio_val(group, val) {
+        function selectedVal(group, val) {
             RESULT[group] = val;
         }
 
         let tmp_cnt = 0;
 
-        function click_button() {
-
+        function buttonHandler() {
             if (tmp_cnt == 0) {
                 $("#btn-post-box").text("다음");
                 $("#btn-post-box").css("background-color", "green");
@@ -80,9 +81,9 @@
             if (tmp_cnt == CODES.length) {
                 $("#btn-post-box").text("다시선택");
                 $("#btn-post-box").css("background-color", "gray");
-                $("#btn-post-box").attr("onclick", "reset_button()")
+                $("#btn-post-box").attr("onclick", "reset()")
 
-                get_stock();
+                getStock();
             } else if (tmp_cnt < CODES.length) {
                 $("#radio-box").empty();
                 let group = CODES[tmp_cnt];
@@ -98,7 +99,7 @@
                             let code = groups[i].code
 
                             let resHTML = `<div class="form-check">
-                                                <input onclick="save_radio_val('${group}','${code}')" class="form-check-input" type="radio" name="${group}" id="${code}">
+                                                <input onclick="selectedVal('${group}','${code}')" class="form-check-input" type="radio" name="${group}" id="${code}">
                                                 <label class="form-check-label" for="${code}">
                                                     ${name}
                                                 </label>
@@ -111,21 +112,46 @@
             }
         }
 
-        function info_button(stock_code) {
-
+        function getStockInfo(stock_code) {
             $.ajax({
                 type: "GET",
                 url: `/stock?stock_code=${stock_code}`,
                 data: {},
                 success: function (response) {
-                    alert("시가 : " + response['price'] + "\n" +
-                        "시총 : " + response['market_cap'] + "\n" +
-                        "PER : " + response['per'])
+                    alert(`주가: ${response['price']}\n시총: ${response['amount']}\nPER: ${response['per']}`);
                 }
             })
         }
 
-        function get_stock() {
+        function setLike(stock_code) {
+            $.ajax({
+                type: "PUT",
+                contentType: "application/json; charset=utf-8",
+                url: `/stock/like`,
+                data: JSON.stringify({'code': stock_code}),
+                success: function (response) {
+                    alert("즐겨찾기 추가되었습니다.");
+                    $(`#like_button_${stock_code}`).css("background-color", "gray");
+                    $(`#like_button_${stock_code}`).attr("onclick", "alert('이미 즐겨찾기 했습니다')");
+                }
+            })
+        }
+
+        function setUnLike(stock_code) {
+            $.ajax({
+                type: "PUT",
+                contentType: "application/json; charset=utf-8",
+                url: `/stock/unlike`,
+                data: JSON.stringify({'code': stock_code}),
+                success: function (response) {
+                    alert("즐겨찾기 삭제했습니다.")
+                    $("#list-stock").empty();
+                    getLikedStockList();
+                }
+            })
+        }
+
+        function getStock() {
             $("#radio-box").hide();
 
             $.ajax({
@@ -145,24 +171,80 @@
                         $("#stock_box").append(resHTML);
                     }
 
-
                     for (let i = 0; i < stocks.length; i++) {
-                        let stock_name = stocks[i].name
-                        let stock_code = stocks[i].code
+                        let stock_name = stocks[i].name;
+                        let stock_code = stocks[i].code;
+                        let stock_islike = stocks[i].isLike;
 
-                        let resHTML = `<div>
+                        console.log(stocks[i]);
+
+                        let resHTML = ""
+                        if (stock_islike) {
+                            resHTML = `<div>
                                             <span>${stock_name}</span>
-                                            <button onclick="info_button('${stock_code}')" class="info_button" type="button">정보
+                                            <button style="background-color: gray" onclick="alert('이미 즐겨찾기 했습니다')" id="like_button_${stock_code}" class="like_button" type="button">즐겨찾기
+                                            </button>
+                                            <button onclick="getStockInfo('${stock_code}')" class="info_button" type="button">정보
                                             </button>
                                         </div>`
+                        } else {
+                            resHTML = `<div>
+                                            <span>${stock_name}</span>
+                                            <button onclick="setLike('${stock_code}')" id="like_button_${stock_code}" class="like_button" type="button">즐겨찾기
+                                            </button>
+                                            <button onclick="getStockInfo('${stock_code}')" class="info_button" type="button">정보
+                                            </button>
+                                        </div>`
+                        }
 
                         $("#stock_box").append(resHTML);
                     }
                 }
             })
         }
-    </script>
 
+        function makeListStock(stock, index) {
+            let tempHtml = ` <tr>
+                      <th scope="row">${index + 1}</th>
+                      <td>${stock['name']}</td>
+                    `;
+
+            tempHtml += `<td><button type="button" class="btn btn-danger" onclick="setUnLike('${stock['code']}')">취소</button></td>`;
+            tempHtml += `<td><button type="button" class="btn btn-info" onclick="getStockInfo('${stock['code']}')">정보</button></td></tr>`
+            $("#list-stock").append(tempHtml);
+        }
+
+        function getLikedStockList() {
+            $.ajax({
+                type: "GET",
+                url: `/stocks/like`,
+                success: function (response) {
+                    let stocks = response['stocks'];
+                    for (let i = 0; i < stocks.length; i++) {
+                        makeListStock(stocks[i], i);
+                    }
+                }
+            })
+        }
+
+        function changePart(type) {
+            if (type == 'like') {
+                $("#rec_part").hide();
+                $("#like_part").show();
+
+                $("#part-like").css("color", "#007bff");
+                $("#part-rec").css("color", "#6c757d");
+
+                getLikedStockList();
+            } else {
+                $("#rec_part").show();
+                $("#like_part").hide();
+
+                $("#part-rec").css("color", "#007bff");
+                $("#part-like").css("color", "#6c757d");
+            }
+        }
+    </script>
 </head>
 
 <body>
@@ -177,7 +259,7 @@
         </li>
     </ul>
 
-    <div class="jumbotron">
+    <div class="jumbotron" id="rec_part">
         <h1 class="display-4">주식 종목 추천!!!</h1>
         <p class="lead">원하시는 종목을 추천합니다. 상한가 가즈아~!</p>
         <hr class="my-4">
@@ -189,12 +271,11 @@
 
         </div>
 
-        <button onclick="click_button()" id="btn-post-box" type="button" class="btn btn-primary">추천시작
+        <button onclick="buttonHandler()" id="btn-post-box" type="button" class="btn btn-primary">추천시작
         </button>
-        </p>
     </div>
 
-    <div class="jumbotron" style="" id="like-part">
+    <div class="jumbotron" style="display: none" id="like_part">
         <h1 class="display-4">즐겨찾기한 종목</h1>
         <p class="lead">즐겨찾기한 종목을 보여드려요~</p>
         <table class="table">

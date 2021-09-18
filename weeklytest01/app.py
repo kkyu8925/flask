@@ -29,14 +29,28 @@ def get_codes():
 
 @app.route('/stocks', methods=['POST'])
 def stocks():
-    # market = request.json['market']
-    # sector = request.json['sector']
-    # tag = request.json['tag']
-    # print(market)
-    # print(sector)
-    # print(tag)
     info = request.json
     stocks = list(db.stocks.find(info, {'_id': False}))
+    return jsonify({'stocks': stocks})
+
+
+@app.route('/stock/like', methods=['PUT'])
+def set_like():
+    info = request.json
+    db.stocks.update_one({"code": info['code']}, {"$set": {"isLike": True}})
+    return "success"
+
+
+@app.route('/stock/unlike', methods=['PUT'])
+def set_unlike():
+    info = request.json
+    db.stocks.update_one({"code": info['code']}, {"$set": {"isLike": False}})
+    return "success"
+
+
+@app.route('/stocks/like', methods=['GET'])
+def get_stocks():
+    stocks = list(db.stocks.find({"isLike": True}, {'_id': False}))
     return jsonify({'stocks': stocks})
 
 
@@ -46,8 +60,8 @@ def stock():
 
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36'}
-    data = requests.get(f'https://finance.naver.com/item/main.nhn?code=${stock_code}', headers=headers)
 
+    data = requests.get('https://finance.naver.com/item/main.nhn?code=' + stock_code, headers=headers)
     soup = BeautifulSoup(data.text, 'html.parser')
     amount = soup.select_one('#_market_sum').text
     amount = amount.replace('\n', '')
@@ -56,9 +70,10 @@ def stock():
         per = 'N/A'
     else:
         per = soup.select_one('#_per').text
-    # price = soup.select_one('#content > div.section.trade_compare > table > tbody > tr:nth-child(1) > td:nth-child(2)').text
+    price = soup.select_one(
+        '#content > div.section.trade_compare > table > tbody > tr:nth-child(1) > td:nth-child(2)').text
 
-    return jsonify({'amount': amount, 'per': per, 'price': "price"})
+    return jsonify({'amount': amount, 'per': per, 'price': price})
 
 
 if __name__ == '__main__':
