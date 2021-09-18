@@ -18,8 +18,7 @@ def home():
 
 @app.route('/base/codes', methods=['GET'])
 def get_base_codes():
-    codes = list(db.codes.find({}, {
-        '_id': False}).distinct("group"))
+    codes = list(db.codes.find({}, {'_id': False}).distinct("group"))
     return jsonify({'codes': codes})
 
 
@@ -30,21 +29,21 @@ def get_codes():
     return jsonify({'groups': groups})
 
 
-@app.route('/stock', methods=['POST'])
-def stock():
-    market = request.json['market']
-    sector = request.json['sector']
-    tag = request.json['tag']
-    print(market)
-    print(sector)
-    print(tag)
-
-    stocks = list(db.stocks.find({"market": market, "sector": sector, "tag": tag}, {'_id': False}))
+@app.route('/stocks', methods=['POST'])
+def stocks():
+    # market = request.json['market']
+    # sector = request.json['sector']
+    # tag = request.json['tag']
+    # print(market)
+    # print(sector)
+    # print(tag)
+    info = request.json
+    stocks = list(db.stocks.find(info, {'_id': False}))
     return jsonify({'stocks': stocks})
 
 
-@app.route('/info', methods=['GET'])
-def info():
+@app.route('/stock', methods=['GET'])
+def stock():
     stock_code = request.args.get("stock_code")
 
     headers = {
@@ -52,16 +51,16 @@ def info():
     data = requests.get(f'https://finance.naver.com/item/main.nhn?code=${stock_code}', headers=headers)
 
     soup = BeautifulSoup(data.text, 'html.parser')
-    # print(soup)
+    amount = soup.select_one('#_market_sum').text
+    amount = amount.replace('\n', '')
+    amount = amount.replace('\t', '')
+    if soup.select_one('#_per') is None:
+        per = 'N/A'
+    else:
+        per = soup.select_one('#_per').text
+    # price = soup.select_one('#content > div.section.trade_compare > table > tbody > tr:nth-child(1) > td:nth-child(2)').text
 
-    # price = soup.select_one('#chart_area > div.rate_info > div > p.no_today > em')
-    market_cap = soup.select_one('#_market_sum')
-    per = soup.select_one('#tab_con1 > div:nth-child(6) > table > tbody > tr.strong > td > em')
-    # print(price)
-    print(market_cap)
-    # print(per)
-
-    return jsonify({'price': '주가', 'market_cap': '시총', 'per': '펄'})
+    return jsonify({'amount': amount, 'per': per, 'price': "price"})
 
 
 if __name__ == '__main__':

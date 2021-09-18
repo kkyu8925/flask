@@ -46,6 +46,17 @@
             get_base_codes();
         })
 
+        function get_base_codes() {
+            $.ajax({
+                type: "GET",
+                url: '/base/codes',
+                data: {},
+                success: function (response) {
+                    CODES = response['codes'];
+                }
+            })
+        }
+
         function reset_button() {
             window.location.reload();
         }
@@ -100,27 +111,16 @@
             }
         }
 
-        function get_base_codes() {
-            $.ajax({
-                type: "GET",
-                url: '/base/codes',
-                data: {},
-                success: function (response) {
-                    CODES = response['codes'];
-                }
-            })
-        }
-
         function info_button(stock_code) {
 
             $.ajax({
                 type: "GET",
-                url: `/info?stock_code=${stock_code}`,
+                url: `/stock?stock_code=${stock_code}`,
                 data: {},
                 success: function (response) {
-                    alert("시가 : "+response['price']+"\n"+
-                        "시총 : "+response['market_cap']+"\n"+
-                        "PER : "+response['per'])
+                    alert("시가 : " + response['price'] + "\n" +
+                        "시총 : " + response['market_cap'] + "\n" +
+                        "PER : " + response['per'])
                 }
             })
         }
@@ -130,14 +130,14 @@
 
             $.ajax({
                 type: "POST",
-                url: '/stock',
+                url: '/stocks',
                 contentType: "application/json; charset=utf-8",
                 data: JSON.stringify(RESULT),
                 success: function (response) {
                     let stocks = response['stocks']
                     console.log(stocks)
 
-                    if(stocks.length==0) {
+                    if (stocks.length == 0) {
                         let resHTML = `<div>
                                             <span>해당하는 기업이 없습니다.</span>
                                         </div>`
@@ -167,6 +167,16 @@
 
 <body>
 <div class="wrap">
+    <ul class="nav">
+        <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="#" id="part-rec" onclick="changePart('rec')">추천</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true" id="part-like"
+               onclick="changePart('like')">즐겨찾기</a>
+        </li>
+    </ul>
+
     <div class="jumbotron">
         <h1 class="display-4">주식 종목 추천!!!</h1>
         <p class="lead">원하시는 종목을 추천합니다. 상한가 가즈아~!</p>
@@ -182,6 +192,24 @@
         <button onclick="click_button()" id="btn-post-box" type="button" class="btn btn-primary">추천시작
         </button>
         </p>
+    </div>
+
+    <div class="jumbotron" style="" id="like-part">
+        <h1 class="display-4">즐겨찾기한 종목</h1>
+        <p class="lead">즐겨찾기한 종목을 보여드려요~</p>
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">종목</th>
+                <th scope="col">즐겨찾기 취소</th>
+                <th scope="col">정보</th>
+            </tr>
+            </thead>
+            <tbody id="list-stock">
+
+            </tbody>
+        </table>
     </div>
 </div>
 </body>
