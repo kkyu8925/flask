@@ -1,17 +1,20 @@
 from datetime import datetime, timedelta
 from functools import wraps
-
 from flask import Flask, render_template, jsonify, request, Response, g
 from pymongo import MongoClient
 import jwt
 import bcrypt
+from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
 
 client = MongoClient("mongodb://localhost:27017/")
 db = client.dbStock
 secret = "secrete"
 algorithm = "HS256"
+
+socketio = SocketIO(app)
 
 
 def login_check(f):
@@ -173,5 +176,26 @@ def login_user():
         return Response(status=401)
 
 
+@app.route('/comment', methods=['POST'])
+@login_check
+def save_comment():
+    idx = request.form.get('idx')
+    comment = request.form.get('comment')
+    post = {'idx': int(idx), 'comment': comment, 'writer': (g.user_id if hasattr(g, 'user_id') else '')}
+    db.comment.insert_one(post)
+
+    # 알림
+    article = db.article.find_one({'idx': int(idx)})
+    socketio.emit(article['writer'], "ok")
+    return {"result": "success"}
+
+
+@app.route('/comment', methods=['GET'])
+def get_comment():
+    idx = request.args['idx']
+    comments = list(db.comment.find({'idx': int(idx)}, {'_id': False}))
+    return jsonify({"comments": comments})
+
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    socketio.run(app, debug=True)

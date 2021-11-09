@@ -1,11 +1,10 @@
 <!Doctype html>
-<html lang="ko">
+<html lang="ko" xmlns="http://www.w3.org/1999/html">
 
 <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="shortcut icon" href="/static/images/favicon.png">
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
@@ -23,12 +22,12 @@
 
     <!-- 구글폰트 -->
     <link href="https://fonts.googleapis.com/css?family=Stylish&display=swap" rel="stylesheet">
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
 
     <title>내배캠 | 질문합시다</title>
 
     <!-- style -->
-    <style type="text/css">
+    <style>
         * {
             font-family: "Stylish", sans-serif;
         }
@@ -193,7 +192,9 @@
                     let content = response['article']['content']
                     $('#modal-title').html(title);
                     $('#modal-content').html(content);
+                    $('#modal-idx').val(idx);
                     $('#articleModal').modal('show');
+                    getComment();
                 }
             })
         }
@@ -258,6 +259,7 @@
                     alert("로그인 되었습니다!!");
                     $('#loginModal').modal('hide');
                     loginCheck();
+                    onSocket($("#login-id").val())
                 }
             })
         }
@@ -300,7 +302,7 @@
             }
 
             if (listType == type) return false;
-            item = `#list-${type}`;
+            let item = `#list-${type}`;
             $(item).closest("ul").find("li").each(function (index) {
                 if ($(this).children("a").hasClass("active")) {
                     $(this).children("a").removeClass("active");
@@ -312,6 +314,44 @@
             });
             listType = type;
             showArticles(1);
+        }
+
+        function saveComment() {
+            let idx = $("#modal-idx").val();
+            let comment = $("#comment").val()
+            $.ajax({
+                type: "POST",
+                url: "/comment",
+                data: {idx: idx, comment: comment},
+                success: function (response) {
+                    alert("저장되었어요!!");
+                    let comments = `<button type="button" class="list-group-item list-group-item-action">${$("#comment").val()}</button>`;
+                    $("#modal-comment").append(comments);
+                    $("#comment").val('');
+                }
+            })
+        }
+
+        function getComment() {
+            $.ajax({
+                type: "GET",
+                url: `/comment?idx=${$("#modal-idx").val()}`,
+                success: function (response) {
+                    let comments = '';
+                    for (let i = 0; i < response['comments'].length; i++) {
+                        comments += `<button type="button" class="list-group-item list-group-item-action">${response['comments'][i].comment}</button>`;
+                    }
+
+                    $("#modal-comment").append(comments)
+                }
+            })
+        }
+
+        function onSocket(id) {
+            let socket = io.connect('http://localhost:5000');
+            socket.on(id, function () {
+                alert("작성하신 글에 댓글이 달렸어요!!");
+            })
         }
     </script>
 
@@ -405,9 +445,14 @@
             </div>
             <div class="modal-body" id="modal-content">
             </div>
+
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <textarea id="comment" class="form-control" rows="2"></textarea>
+                <input id="modal-idx" hidden/>
+                <button type="button" class="btn btn-secondary" onclick="saveComment()">댓글</button>
             </div>
+            <ul class="list-group" id="modal-comment">
+            </ul>
         </div>
     </div>
 </div>
